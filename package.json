@@ -1,0 +1,22 @@
+{
+  "name": "super-mini-prism",
+  "version": "1.0.0",
+  "description": "super mini prism.js",
+  "main": "prism.js",
+  "scripts": {
+    "start": "parcel test.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0326/super-mini-prism.git"
+  },
+  "author": "0326",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/0326/super-mini-prism/issues"
+  },
+  "homepage": "https://github.com/0326/super-mini-prism#readme",
+  "dependencies": {
+    "parcel-bundler": "^1.12.5"
+  }
+}

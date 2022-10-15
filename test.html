@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Test For Prism</title>
+<!-- <link rel="stylesheet" href="assets/style.css" /> -->
+<style>
+textarea {
+	width: 100%;
+	height: 10em;
+	padding: 1em;
+	box-sizing: border-box;
+	margin: .5em 0;
+	background: #f5f2f0;
+	color: black;
+	text-shadow: 0 1px white;
+	tab-size: 4;
+	font: 100% Consolas, Monaco, monospace;
+	white-space: pre;
+	word-wrap: normal;
+}
+
+#language {
+	column-count: 4;
+}
+
+	#language label {
+		display: block;
+		padding: .2em;
+	}
+
+	#language label[data-id="javascript"] {
+		border-bottom: 1px solid #aaa;
+		padding-bottom: 1em;
+		margin-bottom: 1em;
+	}
+
+	#language input {
+		margin-right: 1em;
+	}
+
+	#language strong {
+		display: block;
+		column-span: all;
+	}
+
+
+pre.show-tokens {
+	line-height: calc(1.5em + 12px);
+}
+
+.show-tokens .token:not(:first-child) {
+	margin-left: 1px;
+}
+
+.show-tokens .token:empty {
+	background: red;
+}
+.show-tokens .token:empty::before {
+	color: white;
+	content: 'empty';
+	font-style: italic;
+	text-shadow: black 0 0 .3em;
+}
+
+.show-tokens .token {
+	border: 1px solid;
+	padding: 6px 1px;
+}
+.show-tokens .token > .token {
+	padding: 4px 1px;
+}
+.show-tokens .token > .token > .token {
+	padding: 2px 1px;
+}
+.show-tokens .token > .token > .token > .token {
+	padding: 0 1px;
+}
+.show-tokens .token > .token > .token > .token > .token {
+	border: none;
+	border-left: 1px solid;
+	border-right: 1px solid;
+	padding: 0;
+	margin: 0 1px;
+}
+
+#options {
+	position: relative;
+}
+
+.link-wrapper {
+	position: absolute;
+	top: 0;
+	right: 0;
+	background-color: white;
+}
+.link-wrapper .hidden-wrapper {
+	display: none;
+}
+
+.link-wrapper:hover {
+	top: -.5em;
+	right: -1em;
+	width: 300px;
+	padding: .5em 1em;
+	outline: 1px solid #888;
+}
+.link-wrapper:hover .hidden-wrapper {
+	display: block;
+}
+
+.link-wrapper input {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.link-wrapper button {
+	border: none;
+	background: none;
+	font: inherit;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+</style>
+</head>
+<body>
+
+<header>
+	<h2>Test drive</h2>
+	<p>Take Prism for a spin!</p>
+</header>
+
+<section>
+	<form>
+		<p>
+			<textarea>&lt;p class="hey">Type some code here&lt;/p></textarea>
+		</p>
+
+		<p>Result:</p>
+		<pre><code></code></pre>
+
+		<div id="options" style="margin: 1em 0">
+			<label><input type="checkbox" id="option-show-tokens"> Show tokens</label>
+			<div class="link-wrapper">
+				<a id="share-link" href="" style="float: right;">Share</a>
+				<div class="hidden-wrapper">
+					<input id="share-link-input" type="text" readonly onClick="this.select();"/>
+					<button type="button" id="copy-share-link" onclick="copyShare();">Copy to clipboard</button>
+				</div>
+			</div>
+		</div>
+		<p id="language">
+			<strong>Language:</strong>
+		</p>
+	</form>
+</section>
+<script src="./prism.js"></script>
+<script>
+	console.log('test code');
+</script>
+</body>
+</html>
