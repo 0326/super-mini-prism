@@ -6,6 +6,7 @@ import { addHtml } from './language/html';
 import { addCss } from './language/css';
 import { addClike } from './language/clike';
 import { addJs } from './language/js';
+import fileHighlightPlugin from './plugin/file-highlight';
 
 export function main(_self) {
   var _ = {
@@ -187,6 +188,9 @@ export function main(_self) {
   addCss(_);
   addClike(_);
   addJs(_);
+
+  // 内置初始化插件
+  fileHighlightPlugin();
 
 	return _;
 }
