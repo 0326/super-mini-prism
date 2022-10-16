@@ -1,205 +1,130 @@
 import * as util from './util';
 import { Token, tokenize } from './token';
 import { hooks } from './hooks';
-import addLanguage from './language';
+import { languages } from './language';
+import { addHtml } from './language/html';
+import { addCss } from './language/css';
+import { addClike } from './language/clike';
+import { addJs } from './language/js';
 
 export function main(_self) {
-	// Private helper vars
-	var lang = /(?:^|\s)lang(?:uage)?-([\w-]+)(?=\s|$)/i;
-	var uniqueId = 0;
-
-	// The grammar object for plaintext
-	var plainTextGrammar = {};
-
-	var _ = {
-		manual: _self.Prism && _self.Prism.manual,
+  var _ = {
+    Token,
 		disableWorkerMessageHandler: _self.Prism && _self.Prism.disableWorkerMessageHandler,
-		languages: {
-			plain: plainTextGrammar,
-			plaintext: plainTextGrammar,
-			text: plainTextGrammar,
-			txt: plainTextGrammar,
-			extend: function (id, redef) {
-				var lang = util.clone(_.languages[id]);
+    manual: _self.Prism && _self.Prism.manual,
+    hooks,
+    tokenize,
+    languages,
+    plugins: {},
+  };
 
-				for (var key in redef) {
-					lang[key] = redef[key];
-				}
+  _.highlightAll = function (async, callback) {
+    _.highlightAllUnder(document, async, callback);
+  };
+  _.highlightAllUnder = function (container, async, callback) {
+    var env = {
+      callback: callback,
+      container: container,
+      selector: 'code[class*="language-"], [class*="language-"] code, code[class*="lang-"], [class*="lang-"] code'
+    };
 
-				return lang;
-			},
-			insertBefore: function (inside, before, insert, root) {
-				root = root || /** @type {any} */ (_.languages);
-				var grammar = root[inside];
-				/** @type {Grammar} */
-				var ret = {};
+    _.hooks.run('before-highlightall', env);
 
-				for (var token in grammar) {
-					if (grammar.hasOwnProperty(token)) {
+    env.elements = Array.prototype.slice.apply(env.container.querySelectorAll(env.selector));
 
-						if (token == before) {
-							for (var newToken in insert) {
-								if (insert.hasOwnProperty(newToken)) {
-									ret[newToken] = insert[newToken];
-								}
-							}
-						}
+    _.hooks.run('before-all-elements-highlight', env);
 
-						// Do not insert token which also occur in insert. See #1525
-						if (!insert.hasOwnProperty(token)) {
-							ret[token] = grammar[token];
-						}
-					}
-				}
+    for (var i = 0, element; (element = env.elements[i++]);) {
+      _.highlightElement(element, async === true, env.callback);
+    }
+  };
+  _.highlightElement = function (element, async, callback) {
+    // Find language
+    var language = util.getLanguage(element);
+    var grammar = _.languages[language];
 
-				var old = root[inside];
-				root[inside] = ret;
+    // Set language on the element, if not present
+    util.setLanguage(element, language);
 
-				// Update references in other language definitions
-				_.languages.DFS(_.languages, function (key, value) {
-					if (value === old && key != inside) {
-						this[key] = ret;
-					}
-				});
+    // Set language on the parent, for styling
+    var parent = element.parentElement;
+    if (parent && parent.nodeName.toLowerCase() === 'pre') {
+      util.setLanguage(parent, language);
+    }
 
-				return ret;
-			},
+    var code = element.textContent;
 
-			// Traverse a language definition with Depth First Search
-			DFS: function DFS(o, callback, type, visited) {
-				visited = visited || {};
+    var env = {
+      element: element,
+      language: language,
+      grammar: grammar,
+      code: code
+    };
 
-				var objId = util.objId;
+    function insertHighlightedCode(highlightedCode) {
+      env.highlightedCode = highlightedCode;
 
-				for (var i in o) {
-					if (o.hasOwnProperty(i)) {
-						callback.call(o, i, o[i], type || i);
+      _.hooks.run('before-insert', env);
 
-						var property = o[i];
-						var propertyType = util.type(property);
+      env.element.innerHTML = env.highlightedCode;
 
-						if (propertyType === 'Object' && !visited[objId(property)]) {
-							visited[objId(property)] = true;
-							DFS(property, callback, null, visited);
-						} else if (propertyType === 'Array' && !visited[objId(property)]) {
-							visited[objId(property)] = true;
-							DFS(property, callback, i, visited);
-						}
-					}
-				}
-			}
-		},
+      _.hooks.run('after-highlight', env);
+      _.hooks.run('complete', env);
+      callback && callback.call(env.element);
+    }
 
-		plugins: {},
-		highlightAll: function (async, callback) {
-			_.highlightAllUnder(document, async, callback);
-		},
-		highlightAllUnder: function (container, async, callback) {
-			var env = {
-				callback: callback,
-				container: container,
-				selector: 'code[class*="language-"], [class*="language-"] code, code[class*="lang-"], [class*="lang-"] code'
-			};
+    _.hooks.run('before-sanity-check', env);
 
-			hooks.run('before-highlightall', env);
+    // plugins may change/add the parent/element
+    parent = env.element.parentElement;
+    if (parent && parent.nodeName.toLowerCase() === 'pre' && !parent.hasAttribute('tabindex')) {
+      parent.setAttribute('tabindex', '0');
+    }
 
-			env.elements = Array.prototype.slice.apply(env.container.querySelectorAll(env.selector));
+    if (!env.code) {
+      _.hooks.run('complete', env);
+      callback && callback.call(env.element);
+      return;
+    }
 
-			hooks.run('before-all-elements-highlight', env);
+    _.hooks.run('before-highlight', env);
 
-			for (var i = 0, element; (element = env.elements[i++]);) {
-				_.highlightElement(element, async === true, env.callback);
-			}
-		},
-		highlightElement: function (element, async, callback) {
-			// Find language
-			var language = util.getLanguage(element);
-			var grammar = _.languages[language];
+    if (!env.grammar) {
+      insertHighlightedCode(util.encode(env.code));
+      return;
+    }
 
-			// Set language on the element, if not present
-			util.setLanguage(element, language);
+    if (async && _self.Worker) {
+      var worker = new Worker(_.filename);
 
-			// Set language on the parent, for styling
-			var parent = element.parentElement;
-			if (parent && parent.nodeName.toLowerCase() === 'pre') {
-				util.setLanguage(parent, language);
-			}
+      worker.onmessage = function (evt) {
+        insertHighlightedCode(evt.data);
+      };
 
-			var code = element.textContent;
+      worker.postMessage(JSON.stringify({
+        language: env.language,
+        code: env.code,
+        immediateClose: true
+      }));
+    } else {
+      insertHighlightedCode(_.highlight(env.code, env.grammar, env.language));
+    }
+  }
+  _.highlight = function (text, grammar, language) {
+    var env = {
+      code: text,
+      grammar: grammar,
+      language: language
+    };
+    _.hooks.run('before-tokenize', env);
+    if (!env.grammar) {
+      throw new Error('The language "' + env.language + '" has no grammar.');
+    }
+    env.tokens = _.tokenize(env.code, env.grammar);
+    _.hooks.run('after-tokenize', env);
 
-			var env = {
-				element: element,
-				language: language,
-				grammar: grammar,
-				code: code
-			};
-
-			function insertHighlightedCode(highlightedCode) {
-				env.highlightedCode = highlightedCode;
-
-				hooks.run('before-insert', env);
-
-				env.element.innerHTML = env.highlightedCode;
-
-				hooks.run('after-highlight', env);
-				hooks.run('complete', env);
-				callback && callback.call(env.element);
-			}
-
-			hooks.run('before-sanity-check', env);
-
-			// plugins may change/add the parent/element
-			parent = env.element.parentElement;
-			if (parent && parent.nodeName.toLowerCase() === 'pre' && !parent.hasAttribute('tabindex')) {
-				parent.setAttribute('tabindex', '0');
-			}
-
-			if (!env.code) {
-				hooks.run('complete', env);
-				callback && callback.call(env.element);
-				return;
-			}
-
-			hooks.run('before-highlight', env);
-
-			if (!env.grammar) {
-				insertHighlightedCode(util.encode(env.code));
-				return;
-			}
-
-			if (async && _self.Worker) {
-				var worker = new Worker(_.filename);
-
-				worker.onmessage = function (evt) {
-					insertHighlightedCode(evt.data);
-				};
-
-				worker.postMessage(JSON.stringify({
-					language: env.language,
-					code: env.code,
-					immediateClose: true
-				}));
-			} else {
-				insertHighlightedCode(_.highlight(env.code, env.grammar, env.language));
-			}
-		},
-		highlight: function (text, grammar, language) {
-			var env = {
-				code: text,
-				grammar: grammar,
-				language: language
-			};
-			hooks.run('before-tokenize', env);
-			if (!env.grammar) {
-				throw new Error('The language "' + env.language + '" has no grammar.');
-			}
-			env.tokens = _.tokenize(env.code, env.grammar);
-			hooks.run('after-tokenize', env);
-			return Token.stringify(util.encode(env.tokens), env.language);
-		},
-		tokenize,
-		Token,
-	};
+    return Token.stringify(util.encode(env.tokens), env.language);
+  }
 
 	_self.Prism = _;
 
@@ -257,7 +182,11 @@ export function main(_self) {
 		}
 	}
 
-  addLanguage(_); // 内置 html/css/js language
+  // 内置 html/css/js language
+  addHtml(_);
+  addCss(_);
+  addClike(_);
+  addJs(_);
 
 	return _;
 }

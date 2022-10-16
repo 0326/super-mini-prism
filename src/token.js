@@ -1,5 +1,5 @@
-
-function Token(type, content, alias, matchedStr) {
+import { hooks } from './hooks';
+export function Token(type, content, alias, matchedStr) {
   this.type = type;
   this.content = content;
   this.alias = alias;
@@ -37,7 +37,7 @@ Token.stringify = function stringify(o, language) {
     }
   }
 
-  _.hooks.run('wrap', env);
+  hooks.run('wrap', env);
 
   var attributes = '';
   for (var name in env.attributes) {
@@ -179,7 +179,7 @@ function matchGrammar(text, tokenList, grammar, startNode, startPos, rematch) {
 
         removeRange(tokenList, removeFrom, removeCount);
 
-        var wrapped = new Token(token, inside ? _.tokenize(matchStr, inside) : matchStr, alias, matchStr);
+        var wrapped = new Token(token, inside ? tokenize(matchStr, inside) : matchStr, alias, matchStr);
         currentNode = addAfter(tokenList, removeFrom, wrapped);
 
         if (after) {
@@ -252,7 +252,7 @@ function toArray(list) {
   return array;
 }
 
-function tokenize(text, grammar) {
+export function tokenize(text, grammar) {
   var rest = grammar.rest;
   if (rest) {
     for (var token in rest) {
@@ -270,7 +270,3 @@ function tokenize(text, grammar) {
   return toArray(tokenList);
 }
 
-export default {
-  Token,
-  tokenize,
-}

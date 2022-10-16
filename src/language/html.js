@@ -79,7 +79,7 @@ export function addHtml(Prism) {
   };
 
   Prism.languages.markup['tag'].inside['attr-value'].inside['entity'] =
-    Prism.languages.markup['entity'];
+  Prism.languages.markup['entity'];
   Prism.languages.markup['doctype'].inside['internal-subset'].inside = Prism.languages.markup;
 
   // Plugin to make entity title show the real entity, idea by Roman Komarov

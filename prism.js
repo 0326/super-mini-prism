@@ -1,6 +1,6 @@
 import { main } from './src/index';
 
-const _self = (typeof window !== 'undefined')
+const _global = (typeof window !== 'undefined')
 	? window   // if in browser
 	: (
 		(typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope)
@@ -8,7 +8,7 @@ const _self = (typeof window !== 'undefined')
 			: {}   // if in node js
 	);
 
-const Prism = main(_self);
+const Prism = main(_global);
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = Prism;

@@ -1,3 +1,8 @@
+import { Token } from "./token";
+// Private helper vars
+var lang = /(?:^|\s)lang(?:uage)?-([\w-]+)(?=\s|$)/i;
+var uniqueId = 0;
+
 export function encode(tokens) {
   if (tokens instanceof Token) {
     return new Token(tokens.type, encode(tokens.content), tokens.alias);
@@ -19,13 +24,13 @@ export function objId(obj) {
   return obj['__id'];
 }
 
-export function clone(o, visited) {
+export function deepClone(o, visited) {
   visited = visited || {};
 
   var clone; var id;
-  switch (_.util.type(o)) {
+  switch (type(o)) {
     case 'Object':
-      id = _.util.objId(o);
+      id = objId(o);
       if (visited[id]) {
         return visited[id];
       }
@@ -41,7 +46,7 @@ export function clone(o, visited) {
       return /** @type {any} */ (clone);
 
     case 'Array':
-      id = _.util.objId(o);
+      id = objId(o);
       if (visited[id]) {
         return visited[id];
       }
